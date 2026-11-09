@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四级单词闯关小站</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft Yahei",sans-serif}
+        body{background:#f0f8ff;color:#333;padding:20px}
+        .container{max-width:600px;margin:0 auto;background:#fff;border-radius:16px;padding:30px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+        h1{text-align:center;color:#2b78e4;margin-bottom:24px;font-size:24px}
+        .info{display:flex;justify-content:space-between;margin-bottom:20px;font-size:16px;color:#555}
+        .word-box{text-align:center;padding:30px 10px;border:2px solid #e8f0fe;border-radius:12px;margin-bottom:24px}
+        .en-word{font-size:32px;font-weight:bold;color:#2b78e4;margin-bottom:8px}
+        .options{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+        .option-btn{padding:14px;border:1px solid #2b78e4;background:#fff;color:#2b78e4;border-radius:10px;font-size:16px;cursor:pointer;transition:0.2s}
+        .option-btn:hover{background:#2b78e4;color:#fff}
+        .result-tip{text-align:center;margin:20px 0;font-size:18px;font-weight:bold;height:24px}
+        .correct{color:#27ae60}
+        .wrong{color:#e74c3c}
+        .next-btn{width:100%;padding:14px;background:#2b78e4;color:white;border:none;border-radius:10px;font-size:17px;margin-top:10px;cursor:pointer;display:none}
+        .finish-box{display:none;text-align:center}
+        .finish-box p{font-size:20px;margin:16px 0}
+        .restart-btn{padding:12px 24px;background:#2b78e4;color:white;border:none;border-radius:10px;font-size:16px;cursor:pointer}
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>四级单词闯关练习</h1>
+    <div class="info">
+        <span>题目：<span id="current">0</span>/20</span>
+        <span>得分：<span id="score">0</span></span>
+    </div>
+    <div class="word-box">
+        <div class="en-word" id="word"></div>
+    </div>
+    <div class="options" id="optionWrap"></div>
+    <div class="result-tip" id="tip"></div>
+    <button class="next-btn" id="next">下一题</button>
+
+    <div class="finish-box" id="finish">
+        <h2>闯关结束！</h2>
+        <p>你的最终得分：<span id="finalScore"></span> / 20</p>
+        <button class="restart-btn" onclick="startGame()">重新闯关</button>
+    </div>
+</div>
+
+<script>
+// 四级单词库
+const wordList = [
+    {en:"abandon",cn:"抛弃，放弃"},
+    {en:"ability",cn:"能力，才能"},
+    {en:"abnormal",cn:"反常的"},
+    {en:"absorb",cn:"吸收；使全神贯注"},
+    {en:"abstract",cn:"抽象的；摘要"},
+    {en:"abundant",cn:"丰富的，充裕的"},
+    {en:"accelerate",cn:"加速，促进"},
+    {en:"accent",cn:"口音；重音"},
+    {en:"accept",cn:"接受，承认"},
+    {en:"access",cn:"通道；使用权"},
+    {en:"accident",cn:"事故，意外"},
+    {en:"accompany",cn:"陪伴，伴随"},
+    {en:"accomplish",cn:"完成，实现"},
+    {en:"account",cn:"账户；解释"},
+    {en:"accurate",cn:"准确的，精确的"},
+    {en:"achieve",cn:"实现，达到"},
+    {en:"acquire",cn:"获得；习得"},
+    {en:"adapt",cn:"适应；改编"},
+    {en:"adequate",cn:"足够的；适当的"},
+    {en:"adjust",cn:"调整，调节"}
+];
+
+let currentIndex = 0;
+let score = 0;
+let nowWord = null;
+let isClick = false;
+
+function shuffle(arr){
+    let newArr = [...arr];
+    for(let i=newArr.length-1;i>0;i--){
+        let j = Math.floor(Math.random()*(i+1));
+        [newArr[i],newArr[j]] = [newArr[j],newArr[i]];
+    }
+    return newArr;
+}
+let gameWords = shuffle(wordList);
+
+function startGame(){
+    currentIndex = 0;
+    score = 0;
+    gameWords = shuffle(wordList);
+    document.getElementById("score").innerText = score;
+    document.getElementById("current").innerText = currentIndex;
+    document.getElementById("finish").style.display = "none";
+    document.querySelector(".info").style.display = "flex";
+    document.querySelector(".word-box").style.display = "block";
+    document.getElementById("optionWrap").style.display = "grid";
+    document.getElementById("next").style.display = "none";
+    renderQuestion();
+}
+
+function renderQuestion(){
+    isClick = false;
+    nowWord = gameWords[currentIndex];
+    document.getElementById("word").innerText = nowWord.en;
+    document.getElementById("tip").innerText = "";
+    document.getElementById("next").style.display = "none";
+
+    // 拿3个错误选项
+    let wrongOpt = shuffle(wordList.filter(w=>w.en!==nowWord.en)).slice(0,3);
+    let allOpt = shuffle([nowWord,...wrongOpt]);
+    let html = "";
+    allOpt.forEach(item=>{
+        html += `<button class="option-btn" onclick="choose('${item.cn}')">${item.cn}</button>`
+    })
+    document.getElementById("optionWrap").innerHTML = html;
+    document.getElementById("current").innerText = currentIndex+1;
+}
+
+function choose(selectCn){
+    if(isClick) return;
+    isClick = true;
+    const btns = document.querySelectorAll(".option-btn");
+    btns.forEach(b=>b.style.pointerEvents="none");
+    if(selectCn === nowWord.cn){
+        document.getElementById("tip").innerText = "✅ 回答正确！";
+        document.getElementById("tip").className = "result-tip correct";
+        score +=1;
+        document.getElementById("score").innerText = score;
+    }else{
+        document.getElementById("tip").innerText = `❌ 错啦，正确答案：${nowWord.cn}`;
+        document.getElementById("tip").className = "result-tip wrong";
+    }
+    document.getElementById("next").style.display = "block";
+}
+
+document.getElementById("next").onclick = function(){
+    currentIndex++;
+    if(currentIndex >= gameWords.length){
+        // 结束
+        document.getElementById("finish").style.display = "block";
+        document.getElementById("finalScore").innerText = score;
+        document.querySelector(".info").style.display = "none";
+        document.querySelector(".word-box").style.display = "none";
+        document.getElementById("optionWrap").style.display = "none";
+        document.getElementById("next").style.display = "none";
+    }else{
+        renderQuestion();
+    }
+}
+startGame();
+</script>
+</body>
+</html>
